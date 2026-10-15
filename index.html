@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#050505">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>THE COMEBACK</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/icon-192.png">
+<style>
+  :root{
+    --bg:#050505; --panel:#0d0d0d; --panel2:#121212;
+    --ember:#ff4500; --ember-soft:rgba(255,69,0,.14);
+    --bone:#e8e4dc; --dim:#7a766e; --line:#1f1f1f;
+    --good:#3ddc84; --bad:#ff3b3b;
+    --serif:"Georgia","Times New Roman",serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg); color:var(--bone); font-family:-apple-system,"Segoe UI",Roboto,sans-serif;
+    min-height:100vh; padding-bottom:110px; overflow-x:hidden;
+  }
+  /* film grain */
+  body::before{
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:50; opacity:.05;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+  }
+  /* vignette */
+  body::after{
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:49;
+    background:radial-gradient(ellipse at 50% 30%, transparent 55%, rgba(0,0,0,.75) 100%);
+  }
+  header{
+    padding:calc(20px + env(safe-area-inset-top)) 20px 8px; position:relative;
+  }
+  .kicker{
+    font-size:11px; letter-spacing:.45em; color:var(--ember); text-transform:uppercase;
+    animation:flicker 6s infinite;
+  }
+  @keyframes flicker{
+    0%,100%{opacity:1} 92%{opacity:1} 93%{opacity:.25} 94%{opacity:1} 96%{opacity:.4} 97%{opacity:1}
+  }
+  h1{
+    font-family:var(--serif); font-size:clamp(38px,11vw,64px); line-height:.95;
+    margin-top:10px; letter-spacing:.02em; text-transform:uppercase;
+  }
+  h1 em{color:var(--ember); font-style:italic}
+  .sub{color:var(--dim); font-size:13px; margin-top:10px; letter-spacing:.12em; text-transform:uppercase}
+  main{max-width:560px; margin:0 auto; padding:14px 16px 0}
+  section{margin-bottom:18px}
+  .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:18px;
+    padding:20px; position:relative; overflow:hidden;
+  }
+  .card::before{
+    content:""; position:absolute; top:0; left:0; right:0; height:1px;
+    background:linear-gradient(90deg,transparent,rgba(255,69,0,.5),transparent);
+  }
+  .label{font-size:10px; letter-spacing:.4em; color:var(--dim); text-transform:uppercase; margin-bottom:12px}
+  /* ---- Alarm ---- */
+  .alarm-row{display:flex; align-items:center; gap:16px}
+  .clock{
+    font-family:var(--serif); font-size:52px; letter-spacing:.04em; line-height:1;
+    color:var(--bone); background:none; border:none; outline:none;
+    border-bottom:1px dashed var(--line); padding-bottom:4px; width:170px;
+    color-scheme:dark;
+  }
+  .switch{position:relative; width:56px; height:30px; flex-shrink:0; cursor:pointer}
+  .switch input{opacity:0; width:0; height:0}
+  .slider{
+    position:absolute; inset:0; background:#1a1a1a; border:1px solid var(--line);
+    border-radius:30px; transition:.25s;
+  }
+  .slider::before{
+    content:""; position:absolute; width:22px; height:22px; border-radius:50%;
+    background:var(--dim); top:3px; left:3px; transition:.25s;
+  }
+  .switch input:checked + .slider{background:var(--ember-soft); border-color:var(--ember)}
+  .switch input:checked + .slider::before{transform:translateX(26px); background:var(--ember); box-shadow:0 0 14px var(--ember)}
+  .alarm-meta{margin-top:12px; font-size:13px; color:var(--dim)}
+  .alarm-meta b{color:var(--ember); font-weight:600}
+  /* ---- Check-in ---- */
+  .q{font-family:var(--serif); font-size:22px; line-height:1.25; margin-bottom:18px}
+  .q em{color:var(--ember); font-style:italic}
+  .btn-row{display:flex; gap:12px}
+  .btn{
+    flex:1; padding:16px; border-radius:14px; font-size:14px; letter-spacing:.18em;
+    text-transform:uppercase; font-weight:700; cursor:pointer; border:1px solid var(--line);
+    background:var(--panel2); color:var(--bone); transition:.15s;
+  }
+  .btn:active{transform:scale(.96)}
+  .btn.yes{border-color:rgba(61,220,132,.4); color:var(--good)}
+  .btn.yes.on{background:rgba(61,220,132,.12); box-shadow:0 0 24px rgba(61,220,132,.15) inset}
+  .btn.no{border-color:rgba(255,59,59,.4); color:var(--bad)}
+  .btn.no.on{background:rgba(255,59,59,.1)}
+  .today-state{margin-top:14px; font-size:13px; color:var(--dim); font-style:italic; font-family:var(--serif)}
+  /* ---- Streak ring ---- */
+  .stats-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+  .stat{background:var(--panel2); border:1px solid var(--line); border-radius:14px; padding:16px; text-align:center}
+  .stat .num{font-family:var(--serif); font-size:34px; color:var(--ember)}
+  .stat .cap{font-size:10px; letter-spacing:.3em; color:var(--dim); text-transform:uppercase; margin-top:4px}
+  .ring-wrap{display:flex; align-items:center; gap:18px}
+  .ring{transform:rotate(-90deg)}
+  .ring .bgc{stroke:#1c1c1c}
+  .ring .fgc{stroke:var(--ember); stroke-linecap:round; transition:stroke-dashoffset 1s ease}
+  .ring-txt{font-family:var(--serif)}
+  .ring-txt .big{font-size:30px}
+  .ring-txt .small{font-size:11px; color:var(--dim); letter-spacing:.25em; text-transform:uppercase}
+  .bars{display:flex; align-items:flex-end; gap:6px; height:90px; margin-top:16px}
+  .bar{flex:1; border-radius:4px 4px 0 0; min-height:4px; position:relative; background:#1a1a1a}
+  .bar.fill{background:linear-gradient(180deg,var(--ember),#7a1e00)}
+  .bar.no{background:#3a0d0d}
+  .bar .tip{
+    position:absolute; bottom:calc(100% + 4px); left:50%; transform:translateX(-50%);
+    font-size:9px; color:var(--dim); white-space:nowrap;
+  }
+  .heat{display:grid; grid-template-columns:repeat(7,1fr); gap:5px; margin-top:16px}
+  .heat div{aspect-ratio:1; border-radius:5px; background:#161616; border:1px solid var(--line)}
+  .heat div.y{background:var(--ember); box-shadow:0 0 10px rgba(255,69,0,.4); border-color:var(--ember)}
+  .heat div.n{background:#3a0d0d}
+  .heat div.today{outline:1px dashed var(--ember); outline-offset:2px}
+  /* ---- Vision board ---- */
+  .board{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  .board img{
+    width:100%; aspect-ratio:3/4; object-fit:cover; border-radius:12px;
+    filter:grayscale(1) contrast(1.1); border:1px solid var(--line);
+  }
+  .board .ph{
+    aspect-ratio:3/4; border-radius:12px; border:1px dashed #2a2a2a;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    color:var(--dim); font-size:32px; transition:.2s;
+  }
+  .board .ph:active{border-color:var(--ember); color:var(--ember)}
+  .board .cell{position:relative}
+  .board .cell .del{
+    position:absolute; top:6px; right:6px; width:26px; height:26px; border-radius:50%;
+    background:rgba(0,0,0,.7); color:var(--bad); border:1px solid var(--line);
+    font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  /* ---- Quote dock ---- */
+  .dock{
+    position:fixed; left:0; right:0; bottom:0; z-index:60;
+    background:linear-gradient(180deg,transparent,rgba(5,5,5,.96) 40%);
+    padding:30px 20px calc(16px + env(safe-area-inset-bottom));
+    text-align:center;
+  }
+  .dock .quote{
+    font-family:var(--serif); font-style:italic; font-size:16px; color:var(--bone);
+    max-width:520px; margin:0 auto; transition:opacity .5s;
+  }
+  .dock .who{font-size:10px; letter-spacing:.35em; color:var(--ember); margin-top:8px; text-transform:uppercase}
+  /* ---- Alarm overlay ---- */
+  .overlay{
+    position:fixed; inset:0; z-index:100; background:#000;
+    display:none; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; padding:30px;
+  }
+  .overlay.show{display:flex; animation:pulse 1.6s infinite}
+  @keyframes pulse{0%,100%{background:#000}50%{background:#120300}}
+  .overlay .time{font-family:var(--serif); font-size:80px; color:var(--ember)}
+  .overlay .words{font-family:var(--serif); font-size:22px; font-style:italic; margin-top:20px; max-width:400px; line-height:1.4}
+  .overlay button{
+    margin-top:40px; padding:16px 44px; border-radius:40px; border:1px solid var(--ember);
+    background:transparent; color:var(--ember); font-size:13px; letter-spacing:.3em;
+    text-transform:uppercase; cursor:pointer; font-weight:700;
+  }
+  .goggins-card img{width:100%; border-radius:14px; filter:grayscale(1) contrast(1.15); border:1px solid var(--line)}
+  .goggins-card .cap{
+    font-family:var(--serif); font-style:italic; text-align:center; margin-top:12px;
+    font-size:14px; color:var(--dim);
+  }
+  .goggins-card .cap b{color:var(--ember); font-style:normal}
+  input[type=file]{display:none}
+  .toast{
+    position:fixed; top:calc(16px + env(safe-area-inset-top)); left:50%; transform:translate(-50%,-80px);
+    background:var(--panel2); border:1px solid var(--ember); color:var(--bone);
+    padding:12px 22px; border-radius:30px; font-size:13px; z-index:120; transition:transform .4s;
+  }
+  .toast.show{transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<header>
+  <div class="kicker" id="kicker">The Comeback</div>
+  <h1>STAY<br><em>HARD.</em></h1>
+  <div class="sub" id="greeting">Good morning, Champion.</div>
+</header>
+
+<main>
+
+  <!-- ALARM -->
+  <section class="card">
+    <div class="label">Wake — The First Battle</div>
+    <div class="alarm-row">
+      <input type="time" class="clock" id="alarmTime" value="05:30">
+      <label class="switch"><input type="checkbox" id="alarmOn"><span class="slider"></span></label>
+    </div>
+    <div class="alarm-meta" id="alarmMeta">Alarm off. The dark is where it starts.</div>
+  </section>
+
+  <!-- CHECK-IN -->
+  <section class="card">
+    <div class="label">Daily Verdict</div>
+    <div class="q">Have you made <em>today</em> productive?</div>
+    <div class="btn-row">
+      <button class="btn yes" id="btnYes">Yes. I moved.</button>
+      <button class="btn no" id="btnNo">No. I hid.</button>
+    </div>
+    <div class="today-state" id="todayState">Today is still unwritten.</div>
+  </section>
+
+  <!-- PROGRESS -->
+  <section class="card">
+    <div class="label">Proof Of Work</div>
+    <div class="ring-wrap">
+      <svg class="ring" width="92" height="92" viewBox="0 0 92 92">
+        <circle class="bgc" cx="46" cy="46" r="40" fill="none" stroke-width="7"/>
+        <circle class="fgc" id="ringFg" cx="46" cy="46" r="40" fill="none" stroke-width="7"
+          stroke-dasharray="251.3" stroke-dashoffset="251.3"/>
+      </svg>
+      <div class="ring-txt">
+        <div class="big" id="streakNum">0</div>
+        <div class="small">day streak</div>
+      </div>
+    </div>
+    <div class="stats-grid" style="margin-top:16px">
+      <div class="stat"><div class="num" id="totalYes">0</div><div class="cap">Days won</div></div>
+      <div class="stat"><div class="num" id="totalNo">0</div><div class="cap">Days lost</div></div>
+    </div>
+    <div class="bars" id="bars"></div>
+    <div class="heat" id="heat"></div>
+  </section>
+
+  <!-- VISION BOARD -->
+  <section class="card">
+    <div class="label">Vision Board — Feed The Beast</div>
+    <div class="board" id="board"></div>
+    <input type="file" id="fileIn" accept="image/*" multiple>
+  </section>
+
+  <!-- REMEMBER CARD -->
+  <section class="card goggins-card">
+    <img src="assets/board-discipline.jpg" alt="Discipline">
+    <div class="cap">You were a <b>champion</b> before COVID. Champions don't lose it — they <b>reload</b>. Five years of rust burns off one morning at a time.</div>
+  </section>
+
+  <div style="height:30px"></div>
+</main>
+
+<!-- QUOTE DOCK -->
+<div class="dock">
+  <div class="quote" id="quote"></div>
+  <div class="who" id="who"></div>
+</div>
+
+<!-- ALARM OVERLAY -->
+<div class="overlay" id="overlay">
+  <div class="time" id="ovTime">05:30</div>
+  <div class="words" id="ovWords"></div>
+  <button onclick="dismissAlarm()">Get Up. Prove It.</button>
+</div>
+
+<script>
+/* ================= STATE ================= */
+const store = {
+  get(k, d){ try{ return JSON.parse(localStorage.getItem("cb_"+k)) ?? d }catch(e){ return d } },
+  set(k, v){ localStorage.setItem("cb_"+k, JSON.stringify(v)) }
+};
+const today = () => new Date().toISOString().slice(0,10);
+let checkins = store.get("checkins", {});
+let alarm = store.get("alarm", {time:"05:30", on:false, fired:""});
+let board = store.get("board", ["assets/board-panther.jpg","assets/board-discipline.jpg"]);
+
+/* ================= GREETING ================= */
+(function(){
+  const h = new Date().getHours();
+  const g = h < 5 ? "Still dark. Perfect." : h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
+  document.getElementById("greeting").textContent = g + ", Champion. The comeback starts in the dark.";
+})();
+
+/* ================= QUOTES ================= */
+const QUOTES = [
+  ["The comeback always starts in the dark.","Unknown"],
+  ["You are not lazy. You are dormant. Wake up.","Self"],
+  ["Nobody cares about your feelings. They care about your results.","David Goggins"],
+  ["The only person you need to prove it to is the one in the mirror.","Self"],
+  ["Discipline: choosing what you want most over what you want now.","Abraham Lincoln"],
+  ["A champion is built in the dark, alone, when nobody is watching.","Self"],
+  ["Suffering is the true test of life. Embrace it.","David Goggins"],
+  ["It never gets easier. You just get stronger.","Self"],
+  ["Motivation gets you started. Habit keeps you going.","Jim Ryun"],
+  ["You were a champion once. That person never died. Dig them out.","Self"],
+  ["When you think you're done, you're only at 40% of your capability.","David Goggins"],
+  ["The pain of today is the strength of tomorrow.","Self"]
+];
+let qi = Math.floor(Math.random()*QUOTES.length);
+function showQuote(){
+  const q = document.getElementById("quote"), w = document.getElementById("who");
+  q.style.opacity = 0;
+  setTimeout(()=>{ q.textContent = "\u201C"+QUOTES[qi][0]+"\u201D"; w.textContent = "— "+QUOTES[qi][1];
+    q.style.opacity = 1; qi = (qi+1)%QUOTES.length; }, 500);
+}
+showQuote(); setInterval(showQuote, 20000);
+
+/* ================= ALARM ================= */
+const aTime = document.getElementById("alarmTime");
+const aOn = document.getElementById("alarmOn");
+const aMeta = document.getElementById("alarmMeta");
+aTime.value = alarm.time; aOn.checked = alarm.on;
+function fmt12(t){ let [h,m]=t.split(":").map(Number); const ap=h>=12?"PM":"AM"; h=h%12||12; return h+":"+String(m).padStart(2,"0")+" "+ap }
+function alarmMeta(){
+  if(!alarm.on){ aMeta.innerHTML = "Alarm off. The dark is where it starts."; return }
+  const now = new Date(), [h,m] = alarm.time.split(":").map(Number);
+  const tgt = new Date(); tgt.setHours(h,m,0,0);
+  if(tgt <= now) tgt.setDate(tgt.getDate()+1);
+  const hrs = ((tgt-now)/3600000).toFixed(1);
+  aMeta.innerHTML = "Armed for <b>"+fmt12(alarm.time)+"</b> — in <b>"+hrs+"h</b>. Be standing when it fires.";
+}
+aTime.onchange = () => { alarm.time = aTime.value; alarm.fired=""; store.set("alarm",alarm); alarmMeta() };
+aOn.onchange = () => { alarm.on = aOn.checked; alarm.fired=""; store.set("alarm",alarm); alarmMeta() };
+alarmMeta();
+
+let audioCtx = null;
+function wakeSound(){
+  try{
+    audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state === "suspended") audioCtx.resume();
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.type = "sawtooth"; o.frequency.value = 110;
+    g.gain.setValueAtTime(0.001, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.4, audioCtx.currentTime+0.1);
+    let t = audioCtx.currentTime;
+    for(let i=0;i<14;i++){
+      o.frequency.setValueAtTime(i%2? 110:220, t);
+      g.gain.setValueAtTime(0.35, t);
+      g.gain.setValueAtTime(0.05, t+0.28);
+      t += 0.45;
+    }
+    o.start(); o.stop(t+0.5);
+  }catch(e){}
+}
+const OV_WORDS = [
+  "The dark is done with you. Now move.",
+  "Your competition woke up already. Catch them.",
+  "A champion is waking up. You know them — it's you.",
+  "Feet on the floor. That's the whole secret.",
+  "5 years ago you won. Today you start winning again."
+];
+function fireAlarm(){
+  document.getElementById("ovTime").textContent = fmt12(alarm.time);
+  document.getElementById("ovWords").textContent = OV_WORDS[Math.floor(Math.random()*OV_WORDS.length)];
+  document.getElementById("overlay").classList.add("show");
+  wakeSound(); setTimeout(wakeSound, 4000);
+  if(navigator.vibrate) navigator.vibrate([300,150,300,150,600]);
+}
+function dismissAlarm(){ document.getElementById("overlay").classList.remove("show"); }
+setInterval(()=>{
+  if(!alarm.on) return;
+  const n = new Date();
+  const cur = String(n.getHours()).padStart(2,"0")+":"+String(n.getMinutes()).padStart(2,"0");
+  if(cur === alarm.time && alarm.fired !== today()){ alarm.fired = today(); store.set("alarm",alarm); fireAlarm(); }
+}, 15000);
+
+/* ================= CHECK-IN ================= */
+const btnYes = document.getElementById("btnYes"), btnNo = document.getElementById("btnNo");
+function renderToday(){
+  const v = checkins[today()];
+  btnYes.classList.toggle("on", v==="yes");
+  btnNo.classList.toggle("on", v==="no");
+  document.getElementById("todayState").textContent =
+    v==="yes" ? "Verdict in: you moved. The streak lives." :
+    v==="no"  ? "Verdict in: you hid. Tomorrow you answer again." :
+    "Today is still unwritten.";
+}
+btnYes.onclick = () => { checkins[today()]="yes"; store.set("checkins",checkins); renderToday(); renderStats(); toast("Logged. One more day you didn't quit."); };
+btnNo.onclick  = () => { checkins[today()]="no";  store.set("checkins",checkins); renderToday(); renderStats(); toast("Noted. The dark wins today — not tomorrow."); };
+function toast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove("show"), 2600);
+}
+
+/* ================= STATS ================= */
+function streak(){
+  let s = 0, d = new Date();
+  if(checkins[d.toISOString().slice(0,10)] !== "yes") d.setDate(d.getDate()-1);
+  while(checkins[d.toISOString().slice(0,10)] === "yes"){ s++; d.setDate(d.getDate()-1); }
+  return s;
+}
+function renderStats(){
+  const s = streak();
+  document.getElementById("streakNum").textContent = s;
+  const total = Object.keys(checkins).length;
+  const yes = Object.values(checkins).filter(v=>v==="yes").length;
+  document.getElementById("totalYes").textContent = yes;
+  document.getElementById("totalNo").textContent = total - yes;
+  const C = 251.3;
+  document.getElementById("ringFg").style.strokeDashoffset = C - (total? C*(yes/total) : 0);
+  // last 14 days bars
+  const bars = document.getElementById("bars"); bars.innerHTML = "";
+  for(let i=13;i>=0;i--){
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const key = d.toISOString().slice(0,10), v = checkins[key];
+    const b = document.createElement("div");
+    b.className = "bar" + (v==="yes"?" fill":v==="no"?" no":"");
+    if(i===0) v && (b.style.opacity=.9);
+    const tip = document.createElement("div"); tip.className="tip";
+    tip.textContent = d.toLocaleDateString(undefined,{month:"short",day:"numeric"});
+    b.appendChild(tip); bars.appendChild(b);
+  }
+  // month heatmap
+  const heat = document.getElementById("heat"); heat.innerHTML = "";
+  const now = new Date(), y = now.getFullYear(), mo = now.getMonth();
+  const dim = new Date(y, mo+1, 0).getDate();
+  for(let day=1; day<=dim; day++){
+    const key = new Date(y, mo, day).toISOString().slice(0,10);
+    const cell = document.createElement("div");
+    if(checkins[key]) cell.classList.add(checkins[key]==="yes"?"y":"n");
+    if(day === now.getDate()) cell.classList.add("today");
+    cell.title = key;
+    heat.appendChild(cell);
+  }
+}
+renderToday(); renderStats();
+
+/* ================= VISION BOARD ================= */
+const boardEl = document.getElementById("board");
+const fileIn = document.getElementById("fileIn");
+function renderBoard(){
+  boardEl.innerHTML = "";
+  board.forEach((src, i)=>{
+    const cell = document.createElement("div"); cell.className = "cell";
+    const img = document.createElement("img"); img.src = src;
+    cell.appendChild(img);
+    const del = document.createElement("button"); del.className = "del"; del.textContent = "\u00D7";
+    del.onclick = ()=>{ board.splice(i,1); store.set("board",board); renderBoard(); };
+    cell.appendChild(del);
+    boardEl.appendChild(cell);
+  });
+  const ph = document.createElement("div"); ph.className = "ph"; ph.textContent = "+";
+  ph.onclick = ()=> fileIn.click();
+  boardEl.appendChild(ph);
+}
+fileIn.onchange = e => {
+  [...e.target.files].forEach(f=>{
+    const r = new FileReader();
+    r.onload = ev => {
+      const img = new Image();
+      img.onload = ()=>{
+        const cv = document.createElement("canvas");
+        const sc = Math.min(1, 720/img.width);
+        cv.width = img.width*sc; cv.height = img.height*sc;
+        cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
+        board.push(cv.toDataURL("image/jpeg", 0.75));
+        store.set("board",board); renderBoard();
+      };
+      img.src = ev.target.result;
+    };
+    r.readAsDataURL(f);
+  });
+  fileIn.value = "";
+};
+renderBoard();
+
+/* ================= PWA ================= */
+if("serviceWorker" in navigator){
+  window.addEventListener("load", ()=> navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+</script>
+</body>
+</html>
